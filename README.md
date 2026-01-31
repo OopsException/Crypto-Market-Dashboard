@@ -1,6 +1,6 @@
 # 📊 Crypto Market Dashboard (Data → Report → Charts)
 
-A simple 3-step pipeline that pulls crypto market data from Binance, computes regime + risk stats, writes an expert-style report, and generates charts.
+A simple 4-step pipeline that pulls crypto market data from Binance, computes regime + risk stats, writes an expert-style report, and generates charts.
 
 ---
 
