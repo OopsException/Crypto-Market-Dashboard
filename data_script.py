@@ -43,9 +43,6 @@ ROLLING_DAYS = 365  # e.g., 120/180/365
 END = datetime.now(timezone.utc) # datetime(2026, 1, 31, 23, 59, 59, tzinfo=timezone.utc)
 START = datetime(2023, 10, 1, tzinfo=timezone.utc)  # only used if USE_ROLLING_WINDOW=False
 
-# If you want "today" automatically:
-# END = datetime.now(timezone.utc)
-
 # =========================
 # Helpers
 # =========================
@@ -63,10 +60,7 @@ def to_ms(dt: datetime) -> int:
 
 
 def interval_ms(interval: str) -> int:
-    """
-    Convert Binance interval string to milliseconds.
-    We only need 1d here, but this makes pagination safe if you change it later.
-    """
+    # Convert Binance interval string to milliseconds.
     mapping = {
         "1m": 60_000,
         "5m": 300_000,
@@ -82,7 +76,7 @@ def interval_ms(interval: str) -> int:
 
 
 # =========================
-# Data Fetching (Improved)
+# Data Fetching
 # =========================
 
 def fetch_klines_paginated(symbol: str, interval: str, start: datetime, end: datetime,
@@ -177,7 +171,6 @@ def log_returns(close: pd.Series) -> pd.Series:
     """
     Log returns:
       r_t = ln(P_t / P_{t-1})
-    Useful because they add over time and handle compounding nicely.
     """
     return np.log(close / close.shift(1)).dropna()
 
@@ -241,7 +234,6 @@ def sharpe_ratio(rets: pd.Series, trading_days: int = 365, rf: float = 0.0) -> f
     """
     Sharpe (risk-adjusted return):
       Sharpe = (E[r] - rf) / std(r) * sqrt(trading_days)
-    For crypto we often use rf ~ 0 in dashboards unless you want to plug a rate in.
     """
     if len(rets) < 10:
         return float("nan")
@@ -458,7 +450,7 @@ def cycle_snapshot(symbol: str, df: pd.DataFrame, btc_df: pd.DataFrame | None = 
 
     out = {"symbol": symbol}
 
-    # Recent momentum (simple, intuitive)
+    # Recent momentum
     if len(close) >= 31:
         out["ret_30d_%"] = float(close.pct_change(30).iloc[-1] * 100)
     else:
@@ -474,7 +466,7 @@ def cycle_snapshot(symbol: str, df: pd.DataFrame, btc_df: pd.DataFrame | None = 
     # Vol regime
     vol30, vol_pct = vol_regime(rets)
     out["vol_30d_%_ann"] = vol30 * 100 if not np.isnan(vol30) else float("nan")
-    out["vol_pctile_lookback"] = vol_pct  # 0..1; high => "hot"/riskier regime
+    out["vol_pctile_lookback"] = vol_pct
 
     # BTC-relative stats for USDT pairs
     if btc_df is not None and symbol.endswith("USDT") and symbol != "BTCUSDT":
@@ -553,7 +545,6 @@ def main():
     # A simple way to read them:
     # - If ETHBTC and SOLBTC are trending up (above 200D & positive slope), risk appetite is improving.
     # - If they are trending down, market is more BTC-led / defensive.
-    # (This is *not* a guarantee, but it's a useful dashboard lens.)
 
     print("\n=== Performance & Risk ===")
     print(perf.round(4))
